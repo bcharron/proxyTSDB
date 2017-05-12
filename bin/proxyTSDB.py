@@ -530,6 +530,9 @@ def parse_cmdline(argv):
     parser.add_option('-H', '--host', dest='host', default='localhost',
                       metavar='HOST',
                       help='Hostname to use to connect to the TSD.')
+    parser.add_option('--destport', dest='dest_port', type='int',
+                      default=4242,
+                      help='Port to use to connect to the TSDB (default 4242)')
     parser.add_option('-P', '--pidfile', dest='pidfile',
                       default='/var/run/proxyTSDB.pid',
                       metavar='FILE', help='Write our pidfile')
@@ -559,6 +562,9 @@ def parse_cmdline(argv):
     parser.add_option('--listen', dest='listen_addr', type='str',
                       default='127.0.0.1',
                       help='Listening Addr (default 127.0.0.1)')
+    parser.add_option('--listenport', dest='listen_port', type='int',
+                      default=4242,
+                      help='Listening Port (default 4242)')
     parser.add_option('--ipv6', dest='use_ipv6', action='store_true',
                       default=False,
                       help='Use enable ipv6 for listening (default no)')
@@ -652,7 +658,7 @@ def main(argv):
     METRIC_QUEUE = metricQueue
 
     LOG.debug("Starting Receiver...")
-    server = MetricServer((options.listen_addr, 4242),
+    server = MetricServer((options.listen_addr, options.listen_port),
                           MetricRequestHandler, metricQueue)
     server_thread = threading.Thread(target=server.serve_forever)
     server_thread.start()
@@ -664,7 +670,7 @@ def main(argv):
     if 'DISK' != options.buffer_type:
         dirq_path = None
     sender = MetricSenderOpenTSDB(metricQueue, dirq_path, disk_buff_size,
-                                  (options.host, 4242), sleep_time)
+                                  (options.host, options.dest_port), sleep_time)
     global DISK_METRIC_QUEUE
     DISK_METRIC_QUEUE = sender._diskQueue
     sender.start()
